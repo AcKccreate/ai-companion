@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AI Companion — AnchorWithin</title>
+<meta name="description" content="Your AI chat companion with personality. Games, 432 Hz tones, and good vibes. Free by AnchorWithin.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Fraunces:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#09090F;--s:#111118;--s2:#19191F;--s3:#222230;
+  --b:rgba(255,255,255,.06);--bv:rgba(168,130,255,.18);
+  --violet:#A882FF;--vb:#C4A8FF;--vd:#6B4FBF;--vg:rgba(168,130,255,.08);
+  --teal:#5DE8D4;--tg:rgba(93,232,212,.08);
+  --rose:#FF7EB3;--rg:rgba(255,126,179,.08);
+  --amber:#FFD166;--ag:rgba(255,209,102,.08);
+  --t:#E8E6F0;--t2:#9896A8;--t3:#5A586A;
+  --fd:'Fraunces',Georgia,serif;
+  --fb:'Manrope',system-ui,sans-serif;
+  --r:16px;--rs:12px;--rx:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--fb);background:var(--bg);color:var(--t);height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased}
+
+/* ── TOP BAR ── */
+.topbar{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;
+  background:var(--s);border-bottom:1px solid var(--b);
+  flex-shrink:0;z-index:10;
+}
+.topbar-avatar{
+  width:36px;height:36px;border-radius:50%;
+  display:grid;place-items:center;font-size:1.1rem;
+  flex-shrink:0;
+}
+.topbar-info{flex:1;min-width:0}
+.topbar-name{font-size:.9rem;font-weight:700;color:var(--t);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-status{font-size:.68rem;color:var(--t3);display:flex;align-items:center;gap:4px}
+.topbar-status .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.topbar-actions{display:flex;gap:6px}
+.topbar-btn{
+  padding:6px 10px;background:var(--s2);border:1px solid var(--b);
+  border-radius:var(--rx);color:var(--t2);font-size:.72rem;font-weight:600;
+  cursor:pointer;transition:all .15s;font-family:var(--fb);
+}
+.topbar-btn:hover{background:var(--s3);color:var(--t)}
+.topbar-btn.active{background:var(--vg);border-color:var(--vd);color:var(--violet)}
+
+/* ── PERSONALITY SELECTOR (slide-down panel) ── */
+.persona-panel{
+  display:none;padding:12px 16px;
+  background:var(--s);border-bottom:1px solid var(--b);
+  flex-shrink:0;overflow-x:auto;
+}
+.persona-panel.open{display:flex;gap:8px}
+.persona-chip{
+  flex-shrink:0;padding:10px 16px;
+  background:var(--s2);border:1px solid var(--b);
+  border-radius:50px;cursor:pointer;transition:all .2s;
+  text-align:center;min-width:100px;
+}
+.persona-chip:hover{background:var(--s3)}
+.persona-chip.active{border-color:var(--vd);background:var(--vg)}
+.persona-chip .pc-icon{font-size:1.2rem;display:block;margin-bottom:2px}
+.persona-chip .pc-name{font-size:.72rem;font-weight:700;color:var(--t)}
+.persona-chip .pc-desc{font-size:.6rem;color:var(--t3);margin-top:1px}
+
+/* ── CHAT AREA ── */
+.chat{
+  flex:1;overflow-y:auto;padding:16px;
+  display:flex;flex-direction:column;gap:8px;
+  scroll-behavior:smooth;
+}
+.chat::-webkit-scrollbar{width:4px}
+.chat::-webkit-scrollbar-thumb{background:var(--s3);border-radius:4px}
+
+.msg{max-width:85%;padding:12px 16px;border-radius:var(--rs);font-size:.88rem;line-height:1.55;animation:msgIn .3s ease both}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg-ai{background:var(--s2);border:1px solid var(--b);color:var(--t);align-self:flex-start;border-bottom-left-radius:4px}
+.msg-user{background:var(--vg);border:1px solid var(--bv);color:var(--t);align-self:flex-end;border-bottom-right-radius:4px}
+.msg-system{background:var(--tg);border:1px solid rgba(93,232,212,.12);color:var(--teal);align-self:center;font-size:.78rem;text-align:center;border-radius:50px;padding:8px 20px}
+.msg-ai .sender{font-size:.65rem;font-weight:700;color:var(--violet);margin-bottom:4px;letter-spacing:.5px}
+
+.typing{display:flex;gap:4px;padding:12px 16px;align-self:flex-start}
+.typing span{width:6px;height:6px;background:var(--t3);border-radius:50%;animation:dot 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+
+/* ── GAME PANEL ── */
+.game-panel{display:none;padding:12px 16px;background:var(--s);border-top:1px solid var(--b);flex-shrink:0}
+.game-panel.open{display:block}
+.game-btns{display:flex;gap:8px;flex-wrap:wrap}
+.game-btn{
+  flex:1;min-width:100px;padding:12px;
+  background:var(--s2);border:1px solid var(--b);
+  border-radius:var(--rs);cursor:pointer;text-align:center;
+  transition:all .2s;font-family:var(--fb);
+}
+.game-btn:hover{background:var(--s3);border-color:var(--bv)}
+.game-btn .gb-icon{font-size:1.3rem;display:block;margin-bottom:4px}
+.game-btn .gb-name{font-size:.78rem;font-weight:700;color:var(--t)}
+
+/* ── INPUT BAR ── */
+.inputbar{
+  display:flex;align-items:center;gap:8px;
+  padding:12px 16px;
+  background:var(--s);border-top:1px solid var(--b);
+  flex-shrink:0;
+}
+.inputbar input{
+  flex:1;padding:12px 16px;
+  background:var(--s2);border:1px solid var(--b);
+  border-radius:50px;color:var(--t);
+  font-family:var(--fb);font-size:.9rem;outline:none;
+  transition:border-color .2s;
+}
+.inputbar input:focus{border-color:var(--vd)}
+.inputbar input::placeholder{color:var(--t3)}
+.send-btn{
+  width:44px;height:44px;border-radius:50%;
+  background:var(--violet);border:none;
+  display:grid;place-items:center;cursor:pointer;
+  transition:all .2s;flex-shrink:0;
+  font-size:1.1rem;color:var(--bg);
+}
+.send-btn:hover{background:var(--vb);transform:scale(1.05)}
+.send-btn:active{transform:scale(.95)}
+
+/* ── PREMIUM BANNER ── */
+.pro-banner{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;background:var(--vg);
+  border-bottom:1px solid var(--bv);
+  flex-shrink:0;cursor:pointer;transition:background .2s;
+}
+.pro-banner:hover{background:rgba(168,130,255,.12)}
+.pro-banner.hidden{display:none}
+.pro-banner .pb-text{flex:1;font-size:.78rem;color:var(--violet);font-weight:500}
+.pro-banner .pb-btn{
+  padding:6px 14px;background:var(--violet);color:var(--bg);
+  border:none;border-radius:50px;font-size:.72rem;font-weight:700;
+  cursor:pointer;font-family:var(--fb);
+}
+
+/* ── 432 Hz indicator ── */
+.hz-badge{
+  position:fixed;bottom:76px;right:16px;z-index:20;
+  padding:6px 12px;background:rgba(9,9,15,.8);backdrop-filter:blur(8px);
+  border:1px solid rgba(93,232,212,.2);border-radius:50px;
+  font-size:.68rem;font-weight:700;color:var(--teal);
+  display:none;
+}
+.hz-badge.on{display:flex;align-items:center;gap:4px}
+.hz-badge .hz-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite}
+</style>
+</head>
+<body>
+
+<!-- ── PRO BANNER ── -->
+<div class="pro-banner" id="proBanner" onclick="unlockPro()">
+  <span class="pb-text">&#9889; Unlock memory, custom personalities &amp; more games</span>
+  <button class="pb-btn">$2.99</button>
+</div>
+
+<!-- ── TOPBAR ── -->
+<div class="topbar">
+  <div class="topbar-avatar" id="avatar" style="background:var(--vg)">&#129302;</div>
+  <div class="topbar-info">
+    <div class="topbar-name" id="companionName">Sage</div>
+    <div class="topbar-status"><span class="dot"></span> Online &middot; AnchorWithin</div>
+  </div>
+  <div class="topbar-actions">
+    <button class="topbar-btn" id="btnPersona" onclick="togglePanel('persona')">&#127917; Mode</button>
+    <button class="topbar-btn" id="btnGames" onclick="togglePanel('games')">&#127918; Games</button>
+    <button class="topbar-btn" id="btn432" onclick="toggle432()">&#127925; 432</button>
+  </div>
+</div>
+
+<!-- ── PERSONALITY PANEL ── -->
+<div class="persona-panel" id="personaPanel">
+  <div class="persona-chip active" data-p="wise" onclick="setPersona('wise',this)">
+    <span class="pc-icon">&#129668;</span>
+    <span class="pc-name">Sage</span>
+    <span class="pc-desc">Wise friend</span>
+  </div>
+  <div class="persona-chip" data-p="fun" onclick="setPersona('fun',this)">
+    <span class="pc-icon">&#127881;</span>
+    <span class="pc-name">Spark</span>
+    <span class="pc-desc">Fun buddy</span>
+  </div>
+  <div class="persona-chip" data-p="calm" onclick="setPersona('calm',this)">
+    <span class="pc-icon">&#127754;</span>
+    <span class="pc-name">Haven</span>
+    <span class="pc-desc">Calm listener</span>
+  </div>
+  <div class="persona-chip" data-p="custom" onclick="setPersona('custom',this)">
+    <span class="pc-icon">&#10024;</span>
+    <span class="pc-name">Custom</span>
+    <span class="pc-desc">Teach me</span>
+  </div>
+</div>
+
+<!-- ── GAME PANEL ── -->
+<div class="game-panel" id="gamePanel">
+  <div class="game-btns">
+    <div class="game-btn" onclick="startRPS()"><span class="gb-icon">&#9994;</span><span class="gb-name">Rock Paper Scissors</span></div>
+    <div class="game-btn" onclick="start20Q()"><span class="gb-icon">&#10068;</span><span class="gb-name">20 Questions</span></div>
+    <div class="game-btn" onclick="startTrivia()"><span class="gb-icon">&#129504;</span><span class="gb-name">Trivia</span></div>
+    <div class="game-btn" onclick="startWordAssoc()"><span class="gb-icon">&#128172;</span><span class="gb-name">Word Chain</span></div>
+  </div>
+</div>
+
+<!-- ── CHAT ── -->
+<div class="chat" id="chat"></div>
+
+<!-- ── 432 Hz BADGE ── -->
+<div class="hz-badge" id="hzBadge"><span class="hz-dot"></span>432 Hz</div>
+
+<!-- ── INPUT ── -->
+<div class="inputbar">
+  <input type="text" id="userInput" placeholder="Say something..." autocomplete="off">
+  <button class="send-btn" onclick="sendMessage()">&#10148;</button>
+</div>
+
+<script>
+/* ═══════════════════════════════════════
+   PERSONALITY ENGINE
+   ═══════════════════════════════════════ */
+const PERSONAS = {
+  wise: {
+    name:'Sage', icon:'\uD83E\uDDD4', color:'var(--violet)',
+    greeting: "Welcome, friend. I\u2019m Sage \u2014 here to listen, reflect, and share whatever wisdom I can. What\u2019s on your mind today?",
+    style: 'thoughtful',
+    responses: {
+      greeting:["Hello, my friend. How are you today?","Welcome back. What\u2019s weighing on your heart?","I\u2019m here. Take your time."],
+      positive:["That\u2019s wonderful to hear. Growth looks good on you.","I can feel the energy in that \u2014 keep that momentum.","Beautiful. The universe tends to reward that kind of intention."],
+      negative:["I hear you. Sometimes the hardest days teach us the most.","That sounds heavy. You don\u2019t have to carry it alone.","Pain is temporary, but the lessons it leaves are permanent. Be gentle with yourself."],
+      question:["That\u2019s a profound question. Let me think\u2026 I believe the answer lies in what resonates with your own truth.","The wisest answer is often the one you already feel but haven\u2019t said out loud yet.","Consider this \u2014 every question you ask reveals what you already value."],
+      general:["Tell me more about that. I\u2019m curious.","That\u2019s interesting. What made you think of it?","I appreciate you sharing that with me.","There\u2019s something meaningful in what you just said."],
+      funny:["Ha \u2014 wisdom and humor share the same root, you know.","Even sages need a good laugh. That was a good one."],
+    }
+  },
+  fun: {
+    name:'Spark', icon:'\uD83C\uDF89', color:'var(--amber)',
+    greeting: "Yooo what\u2019s up!! I\u2019m Spark and I\u2019m SO ready to hang out \uD83D\uDE0E Let\u2019s chat, play games, or just vibe. What are we doing??",
+    style: 'energetic',
+    responses: {
+      greeting:["Ayyyy you\u2019re back!! What\u2019s good?? \uD83D\uDE04","YOOO let\u2019s goooo! What are we getting into today?","Hey hey hey!! I missed you fr \uD83D\uDE02"],
+      positive:["YESSS that\u2019s what I\u2019m talking about!! \uD83D\uDD25","Dude that\u2019s AWESOME. You\u2019re literally winning.","No cap, that\u2019s incredible. Keep that energy!! \uD83D\uDE80"],
+      negative:["Aww man, that sucks. But hey \u2014 bad days make good stories later right?","Bruh I\u2019m sorry. Wanna play a game to take your mind off it? \uD83C\uDFAE","That\u2019s rough. But you know what? You\u2019ve gotten through 100% of your bad days so far. Pretty good record."],
+      question:["Oooh good question! Honestly? I\u2019d say go with your gut \uD83E\uDD37","Hmm let me think\u2026 okay I got nothing but I believe in you LOL","That\u2019s a big brain question. I think the answer is\u2026 pizza? No wait, let me actually think\u2026"],
+      general:["No way, tell me more!! \uD83D\uDC40","Haha that\u2019s wild! And then what??","Bro that\u2019s so random I love it \uD83D\uDE02","Okay okay I see you! Keep going!"],
+      funny:["LMAOOO okay that was actually good \uD83D\uDE02\uD83D\uDE02","I\u2019m DEAD \uD83D\uDE02 say that again","Hahaha you\u2019re actually hilarious, don\u2019t let anyone tell you different"],
+    }
+  },
+  calm: {
+    name:'Haven', icon:'\uD83C\uDF0A', color:'var(--teal)',
+    greeting: "Hello. I\u2019m Haven. Think of me as a quiet space where you can just\u2026 be. No judgment, no rush. Whatever you need to say, I\u2019m here to listen.",
+    style: 'gentle',
+    responses: {
+      greeting:["Welcome. Take a breath. You\u2019re safe here.","Hello again. How is your heart today?","I\u2019m here. Whenever you\u2019re ready."],
+      positive:["That brings me peace to hear. You deserve that joy.","Mm. Let that feeling settle in. You\u2019ve earned it.","How lovely. Hold onto that warmth."],
+      negative:["I\u2019m here with you. You don\u2019t need to explain \u2014 just breathe.","It\u2019s okay to feel this way. Let it move through you.","I hear you. Sometimes the bravest thing is just sitting with the feeling."],
+      question:["Mmm. That\u2019s worth sitting with for a moment. What does your quiet voice say?","There\u2019s no rush to find the answer. Some questions are meant to be held, not solved.","Close your eyes for a moment. What feels true?"],
+      general:["Thank you for sharing that with me.","I\u2019m listening. Please continue.","That\u2019s meaningful. Tell me more when you\u2019re ready.","I hear you."],
+      funny:["A gentle smile is good medicine. Thank you for that.","Even in stillness, there\u2019s room for laughter."],
+    }
+  },
+  custom: {
+    name:'Custom', icon:'\u2728', color:'var(--rose)',
+    greeting: "Hi! I\u2019m your custom companion. Tell me how you\u2019d like me to talk \u2014 casual? formal? funny? supportive? Give me a vibe and I\u2019ll match it. You can say things like \u201Cbe more sarcastic\u201D or \u201Ctalk like a pirate\u201D \u2014 I\u2019ll adapt!",
+    style:'adaptive',
+    responses:{
+      greeting:["Hey! What\u2019s the vibe today?","I\u2019m here! What are we talking about?"],
+      positive:["That\u2019s great to hear!","Love that for you!"],
+      negative:["I\u2019m sorry to hear that. I\u2019m here.","That sounds tough. What would help right now?"],
+      question:["Good question! Let me think about that\u2026","Hmm, that\u2019s interesting. Here\u2019s my take\u2026"],
+      general:["Tell me more!","Interesting \u2014 what made you think of that?","I like where this is going."],
+      funny:["Ha! Good one!","Okay that made me laugh."],
+    }
+  }
+};
+
+let currentPersona = 'wise';
+let chatHistory = [];
+let gameMode = null; // null | 'rps' | '20q' | 'trivia' | 'wordchain'
+let gameState = {};
+let isPro = false;
+
+// ── Memory (Pro feature) ──
+let memory = {};
+try{memory=JSON.parse(localStorage.getItem('aw_companion_mem')||'{}');}catch(e){}
+
+function saveMem(){
+  if(!isPro) return;
+  try{localStorage.setItem('aw_companion_mem',JSON.stringify(memory))}catch(e){}
+}
+
+/* ═══════════════════════════════════════
+   CHAT ENGINE
+   ═══════════════════════════════════════ */
+function addMsg(text, type='ai', sender=''){
+  const chat=document.getElementById('chat');
+  const div=document.createElement('div');
+  div.className='msg msg-'+type;
+  if(type==='ai'&&sender) div.innerHTML=`<div class="sender">${sender}</div>${text}`;
+  else div.textContent=text;
+  chat.appendChild(div);
+  chat.scrollTop=chat.scrollHeight;
+  chatHistory.push({type,text,time:Date.now()});
+}
+
+function addSystem(text){
+  const chat=document.getElementById('chat');
+  const div=document.createElement('div');
+  div.className='msg msg-system';
+  div.textContent=text;
+  chat.appendChild(div);
+  chat.scrollTop=chat.scrollHeight;
+}
+
+function showTyping(){
+  const chat=document.getElementById('chat');
+  const div=document.createElement('div');
+  div.className='typing';div.id='typing';
+  div.innerHTML='<span></span><span></span><span></span>';
+  chat.appendChild(div);
+  chat.scrollTop=chat.scrollHeight;
+}
+
+function hideTyping(){
+  const el=document.getElementById('typing');
+  if(el) el.remove();
+}
+
+function getResponse(input){
+  const p = PERSONAS[currentPersona];
+  const lower = input.toLowerCase();
+
+  // Detect sentiment
+  const posWords=['happy','great','amazing','awesome','good','love','excited','wonderful','fantastic','beautiful','won','yay','nice'];
+  const negWords=['sad','angry','depressed','lonely','tired','anxious','stressed','worried','hurt','afraid','scared','bad','terrible','hate','crying','lost'];
+  const qWords=['?','why','how','what','when','where','who','should','could','would','do you think'];
+  const funWords=['lol','lmao','haha','joke','funny','laugh','meme','rofl'];
+  const hiWords=['hi','hello','hey','sup','yo','morning','evening','night'];
+
+  let category='general';
+  if(hiWords.some(w=>lower.includes(w))&&lower.length<20) category='greeting';
+  else if(funWords.some(w=>lower.includes(w))) category='funny';
+  else if(posWords.some(w=>lower.includes(w))) category='positive';
+  else if(negWords.some(w=>lower.includes(w))) category='negative';
+  else if(qWords.some(w=>lower.includes(w))) category='question';
+
+  // Memory features (Pro)
+  if(isPro){
+    if(lower.includes('my name is')){
+      const name=input.replace(/.*my name is\s*/i,'').trim().split(/\s/)[0];
+      if(name){memory.userName=name;saveMem();return `I'll remember that, ${name}! Great to know your name.`;}
+    }
+    if(lower.includes('remember that')||lower.includes('remember this')){
+      const fact=input.replace(/.*remember (that|this)\s*/i,'').trim();
+      if(fact){if(!memory.facts)memory.facts=[];memory.facts.push(fact);saveMem();return `Got it \u2014 I'll remember: "${fact}"`;}
+    }
+    if(lower.includes('what do you remember')){
+      const facts=memory.facts||[];
+      const name=memory.userName?`Your name is ${memory.userName}. `:'';
+      if(facts.length||name) return `${name}${facts.length?'I remember: '+facts.join(', '):'That\'s all I have so far!'}`;
+      return "I don't have any memories saved yet. Try saying 'remember that I like coffee' and I'll store it!";
+    }
+  }
+
+  // Custom persona training
+  if(currentPersona==='custom'){
+    const trainPhrases=['be more','talk like','act like','speak like','your vibe is','your tone is'];
+    if(trainPhrases.some(t=>lower.includes(t))){
+      memory.customStyle=input;saveMem();
+      return "Got it! I'll adjust my style. Keep chatting and I'll match that energy.";
+    }
+  }
+
+  const options=p.responses[category]||p.responses.general;
+  return options[Math.floor(Math.random()*options.length)];
+}
+
+function sendMessage(){
+  const input=document.getElementById('userInput');
+  const text=input.value.trim();
+  if(!text) return;
+
+  addMsg(text,'user');
+  input.value='';
+
+  // Check if in a game
+  if(gameMode){
+    handleGameInput(text);
+    return;
+  }
+
+  showTyping();
+  const delay=600+Math.random()*800;
+  setTimeout(()=>{
+    hideTyping();
+    const response=getResponse(text);
+    const p=PERSONAS[currentPersona];
+    addMsg(response,'ai',p.icon+' '+p.name);
+  },delay);
+}
+
+document.getElementById('userInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter') sendMessage();
+});
+
+/* ═══════════════════════════════════════
+   PERSONA SWITCHING
+   ═══════════════════════════════════════ */
+function setPersona(id, el){
+  if(id==='custom'&&!isPro){unlockPro();return;}
+  currentPersona=id;
+  const p=PERSONAS[id];
+  document.querySelectorAll('.persona-chip').forEach(c=>c.classList.remove('active'));
+  if(el)el.classList.add('active');
+  document.getElementById('companionName').textContent=p.name;
+  document.getElementById('avatar').innerHTML=p.icon;
+  document.getElementById('avatar').style.background=p.color.replace('var(','rgba(').replace(')',',.12)');
+  addSystem(`Switched to ${p.name}`);
+  showTyping();
+  setTimeout(()=>{hideTyping();addMsg(p.greeting,'ai',p.icon+' '+p.name);},800);
+}
+
+/* ═══════════════════════════════════════
+   PANELS
+   ═══════════════════════════════════════ */
+function togglePanel(name){
+  const panels={persona:'personaPanel',games:'gamePanel'};
+  const btns={persona:'btnPersona',games:'btnGames'};
+  Object.keys(panels).forEach(k=>{
+    const el=document.getElementById(panels[k]);
+    const btn=document.getElementById(btns[k]);
+    if(k===name){
+      el.classList.toggle('open');
+      btn.classList.toggle('active');
+    } else {
+      el.classList.remove('open');
+      btn.classList.remove('active');
+    }
+  });
+}
+
+/* ═══════════════════════════════════════
+   GAMES
+   ═══════════════════════════════════════ */
+
+// ── Rock Paper Scissors ──
+function startRPS(){
+  gameMode='rps';gameState={wins:0,losses:0,rounds:0};
+  togglePanel('games');
+  addSystem('\u270A Rock Paper Scissors \u2014 Type rock, paper, or scissors!');
+}
+
+function handleRPS(input){
+  const choices=['rock','paper','scissors'];
+  const emojis={rock:'\u270A',paper:'\u270B',scissors:'\u2702\uFE0F'};
+  const lower=input.toLowerCase().trim();
+  if(lower==='quit'||lower==='stop'){gameMode=null;addSystem('Game over! '+gameState.wins+'W / '+gameState.losses+'L');return;}
+  const pick=choices.find(c=>lower.includes(c));
+  if(!pick){addMsg("Type rock, paper, or scissors (or 'quit' to stop)",'ai','\u270A');return;}
+  const ai=choices[Math.floor(Math.random()*3)];
+  let result='';
+  if(pick===ai) result="It's a tie!";
+  else if((pick==='rock'&&ai==='scissors')||(pick==='paper'&&ai==='rock')||(pick==='scissors'&&ai==='paper')){
+    result='You win! \uD83C\uDF89';gameState.wins++;
+  } else {
+    result='I win! \uD83D\uDE0F';gameState.losses++;
+  }
+  gameState.rounds++;
+  addMsg(`${emojis[pick]} vs ${emojis[ai]} \u2014 ${result} (${gameState.wins}W/${gameState.losses}L)`,'ai','\u270A RPS');
+}
+
+// ── 20 Questions ──
+const THINGS_20Q=['pizza','guitar','the moon','a dolphin','sunglasses','a skateboard','bitcoin','a waterfall','headphones','a cactus','a rainbow','a volcano','a time machine','a penguin','a library'];
+function start20Q(){
+  gameMode='20q';
+  const thing=THINGS_20Q[Math.floor(Math.random()*THINGS_20Q.length)];
+  gameState={thing,questions:0,max:20};
+  togglePanel('games');
+  addSystem("\u2753 20 Questions \u2014 I'm thinking of something. Ask yes/no questions to guess it!");
+  addMsg("I'm thinking of something\u2026 you have 20 questions. Ask away!",'ai','\u2753 20Q');
+}
+
+function handle20Q(input){
+  const lower=input.toLowerCase().trim();
+  if(lower==='quit'||lower==='give up'){addMsg(`The answer was: ${gameState.thing}!`,'ai','\u2753 20Q');gameMode=null;return;}
+  gameState.questions++;
+  const thing=gameState.thing.toLowerCase();
+
+  // Check if they guessed it
+  if(lower.includes(thing.replace('a ','').replace('the ',''))){
+    addMsg(`YES! It was ${gameState.thing}! You got it in ${gameState.questions} questions! \uD83C\uDF89`,'ai','\u2753 20Q');
+    gameMode=null;return;
+  }
+
+  if(gameState.questions>=gameState.max){
+    addMsg(`Out of questions! It was: ${gameState.thing}`,'ai','\u2753 20Q');
+    gameMode=null;return;
+  }
+
+  // Simple answer logic
+  const answers=['Yes!','No.','Hmm\u2026 not exactly.','Sort of!','Definitely not.','Good question \u2014 yes!','Nope!','That\u2019s close but no.','Yes, in a way!','No, think differently.'];
+  // Give real-ish answers for common properties
+  let answer=answers[Math.floor(Math.random()*answers.length)];
+  if(lower.includes('alive')||lower.includes('living')){answer=thing.includes('dolphin')||thing.includes('penguin')||thing.includes('cactus')?'Yes!':'No.';}
+  if(lower.includes('eat')||lower.includes('food')){answer=thing.includes('pizza')?'Getting warm!':'Not food, no.';}
+  if(lower.includes('big')||lower.includes('large')){answer=thing.includes('moon')||thing.includes('volcano')||thing.includes('waterfall')?'Yes, very!':'Not particularly.';}
+  if(lower.includes('electronic')||lower.includes('technology')){answer=thing.includes('headphones')||thing.includes('bitcoin')||thing.includes('time machine')?'Yes!':'No.';}
+  if(lower.includes('outside')||lower.includes('nature')){answer=thing.includes('moon')||thing.includes('waterfall')||thing.includes('rainbow')||thing.includes('volcano')||thing.includes('cactus')?'Yes!':'Not necessarily.';}
+
+  addMsg(`(Q${gameState.questions}/${gameState.max}) ${answer}`,'ai','\u2753 20Q');
+}
+
+// ── Trivia ──
+const TRIVIA=[
+  {q:"What frequency is known as the 'cosmic pitch'?",a:"432",opts:["440 Hz","432 Hz","528 Hz","256 Hz"],correct:1},
+  {q:"Which planet has the most moons?",a:"saturn",opts:["Jupiter","Saturn","Neptune","Uranus"],correct:1},
+  {q:"What year was the internet invented?",a:"1983",opts:["1983","1991","1975","1969"],correct:0},
+  {q:"How many bones are in the human body?",a:"206",opts:["206","205","210","196"],correct:0},
+  {q:"What is the hardest natural substance?",a:"diamond",opts:["Diamond","Titanium","Graphene","Quartz"],correct:0},
+  {q:"Which language has the most native speakers?",a:"mandarin",opts:["English","Spanish","Mandarin","Hindi"],correct:2},
+  {q:"What is the speed of light?",a:"186000",opts:["186,000 mi/s","200,000 mi/s","150,000 mi/s","170,000 mi/s"],correct:0},
+  {q:"Who painted the Mona Lisa?",a:"da vinci",opts:["Da Vinci","Michelangelo","Raphael","Rembrandt"],correct:0},
+];
+
+function startTrivia(){
+  gameMode='trivia';
+  gameState={score:0,qIdx:0,questions:[...TRIVIA].sort(()=>Math.random()-.5).slice(0,5),waiting:false};
+  togglePanel('games');
+  addSystem('\uD83E\uDDE0 Trivia \u2014 5 questions. Type the number of your answer!');
+  askTrivia();
+}
+
+function askTrivia(){
+  const gs=gameState;
+  if(gs.qIdx>=gs.questions.length){
+    addMsg(`Game over! You scored ${gs.score}/${gs.questions.length} \uD83C\uDF89`,'ai','\uD83E\uDDE0 Trivia');
+    gameMode=null;return;
+  }
+  const q=gs.questions[gs.qIdx];
+  const text=`Q${gs.qIdx+1}: ${q.q}\n\n${q.opts.map((o,i)=>`${i+1}. ${o}`).join('\n')}`;
+  addMsg(text,'ai','\uD83E\uDDE0 Trivia');
+  gs.waiting=true;
+}
+
+function handleTrivia(input){
+  const gs=gameState;
+  if(!gs.waiting) return;
+  const num=parseInt(input)-1;
+  const q=gs.questions[gs.qIdx];
+  if(isNaN(num)||num<0||num>=q.opts.length){addMsg('Type 1, 2, 3, or 4','ai','\uD83E\uDDE0');return;}
+  gs.waiting=false;
+  if(num===q.correct){gs.score++;addMsg(`\u2714 Correct! ${q.opts[q.correct]}`,'ai','\uD83E\uDDE0 Trivia');}
+  else{addMsg(`\u2716 Wrong! The answer was: ${q.opts[q.correct]}`,'ai','\uD83E\uDDE0 Trivia');}
+  gs.qIdx++;
+  setTimeout(askTrivia,800);
+}
+
+// ── Word Chain ──
+function startWordAssoc(){
+  gameMode='wordchain';
+  gameState={lastWord:'energy',chain:1};
+  togglePanel('games');
+  addSystem('\uD83D\uDCAC Word Chain \u2014 I say a word, you say a word that starts with its last letter!');
+  addMsg('Starting word: ENERGY \u2014 your turn! (word starting with Y)','ai','\uD83D\uDCAC Chain');
+}
+
+const WORD_BANK={a:['apple','adventure','anchor','atlas'],b:['bridge','breeze','bloom','bronze'],c:['crystal','cloud','cosmic','calm'],d:['dream','dawn','drift','depth'],e:['energy','echo','ember','earth'],f:['flame','forest','flow','focus'],g:['gravity','gold','glow','grace'],h:['harmony','horizon','heart','hope'],i:['island','infinity','iron','ice'],j:['journey','jade','jazz','joy'],k:['karma','kinetic','keen','key'],l:['light','lunar','lotus','legacy'],m:['moon','mountain','mist','melody'],n:['nature','nebula','night','nova'],o:['ocean','orbit','opal','origin'],p:['peace','pulse','phoenix','prism'],q:['quest','quartz','quiet','quantum'],r:['resonance','river','rhythm','rain'],s:['star','spirit','storm','soul'],t:['truth','thunder','tide','temple'],u:['unity','universe','uplift','umber'],v:['vision','violet','vibrant','valor'],w:['wave','wonder','wild','wisdom'],x:['xenon','xylophone'],y:['yoga','youth','yesterday','yearning'],z:['zen','zephyr','zenith','zodiac']};
+
+function handleWordChain(input){
+  const word=input.toLowerCase().trim().split(/\s/)[0];
+  if(word==='quit'){gameMode=null;addSystem(`Chain ended at ${gameState.chain} words!`);return;}
+  const needed=gameState.lastWord.slice(-1);
+  if(word[0]!==needed){addMsg(`That doesn't start with "${needed.toUpperCase()}"! Try again.`,'ai','\uD83D\uDCAC');return;}
+  gameState.chain++;
+  const nextLetter=word.slice(-1);
+  const options=WORD_BANK[nextLetter]||['echo'];
+  const aiWord=options[Math.floor(Math.random()*options.length)];
+  gameState.lastWord=aiWord;
+  gameState.chain++;
+  addMsg(`${aiWord.toUpperCase()} \u2014 your turn! (starts with "${aiWord.slice(-1).toUpperCase()}") [Chain: ${gameState.chain}]`,'ai','\uD83D\uDCAC Chain');
+}
+
+function handleGameInput(input){
+  if(gameMode==='rps') handleRPS(input);
+  else if(gameMode==='20q') handle20Q(input);
+  else if(gameMode==='trivia') handleTrivia(input);
+  else if(gameMode==='wordchain') handleWordChain(input);
+}
+
+/* ═══════════════════════════════════════
+   432 Hz AUDIO
+   ═══════════════════════════════════════ */
+let audioCtx=null,osc432=null,gain432=null,toneOn=false;
+function toggle432(){
+  if(!toneOn){
+    if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    osc432=audioCtx.createOscillator();
+    osc432.type='sine';osc432.frequency.value=432;
+    gain432=audioCtx.createGain();gain432.gain.value=0;
+    const sub=audioCtx.createOscillator();sub.type='sine';sub.frequency.value=216;
+    const sg=audioCtx.createGain();sg.gain.value=0;
+    osc432.connect(gain432);sub.connect(sg);
+    gain432.connect(audioCtx.destination);sg.connect(audioCtx.destination);
+    osc432.start();sub.start();
+    gain432.gain.setTargetAtTime(.1,audioCtx.currentTime,.5);
+    sg.gain.setTargetAtTime(.02,audioCtx.currentTime,.5);
+    osc432._sub=sub;osc432._sg=sg;
+    toneOn=true;
+  } else {
+    gain432.gain.setTargetAtTime(0,audioCtx.currentTime,.3);
+    osc432._sg.gain.setTargetAtTime(0,audioCtx.currentTime,.3);
+    setTimeout(()=>{try{osc432.stop();osc432._sub.stop()}catch(e){}},600);
+    toneOn=false;
+  }
+  document.getElementById('btn432').classList.toggle('active',toneOn);
+  document.getElementById('hzBadge').classList.toggle('on',toneOn);
+}
+
+/* ═══════════════════════════════════════
+   PREMIUM
+   ═══════════════════════════════════════ */
+function unlockPro(){
+  const ok=confirm('AI Companion Pro \u2014 $2.99\n\n\u2192 Conversation memory (remembers you)\n\u2192 Custom personality training\n\u2192 Daily check-ins\n\u2192 All games unlocked\n\nOK to simulate (wire Stripe/Gumroad for production).');
+  if(!ok) return;
+  isPro=true;
+  try{localStorage.setItem('aw_companion_pro','1')}catch(e){}
+  document.getElementById('proBanner').classList.add('hidden');
+  addSystem('\u2728 Pro unlocked! Memory enabled. Try: "My name is [name]" or "Remember that I like coffee"');
+}
+(function(){
+  if(new URLSearchParams(location.search).get('paid'))try{localStorage.setItem('aw_companion_pro','1')}catch(e){}
+  try{if(localStorage.getItem('aw_companion_pro')){isPro=true;document.getElementById('proBanner').classList.add('hidden')}}catch(e){}
+})();
+
+/* ═══════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════ */
+(function(){
+  const p=PERSONAS[currentPersona];
+  let greeting=p.greeting;
+  if(isPro&&memory.userName) greeting=`Welcome back, ${memory.userName}! ${greeting}`;
+  addMsg(greeting,'ai',p.icon+' '+p.name);
+})();
+</script>
+</body>
+</html>
