@@ -632,8 +632,8 @@ function toggle432(){
    PREMIUM
    ═══════════════════════════════════════ */
 function unlockPro(){
-  const ok=confirm('AI Companion Pro \u2014 $2.99\n\n\u2192 Conversation memory (remembers you)\n\u2192 Custom personality training\n\u2192 Daily check-ins\n\u2192 All games unlocked\n\nOK to simulate (wire Stripe/Gumroad for production).');
-  if(!ok) return;
+  window.location.href = 'https://buy.stripe.com/9B614o6HceOX5obfj467S0c';
+  return;
   isPro=true;
   try{localStorage.setItem('aw_companion_pro','1')}catch(e){}
   document.getElementById('proBanner').classList.add('hidden');
